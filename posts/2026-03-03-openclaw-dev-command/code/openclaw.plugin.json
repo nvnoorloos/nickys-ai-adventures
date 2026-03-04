@@ -1,0 +1,10 @@
+{
+  "id": "dev-command",
+  "name": "dev-command",
+  "description": "Telegram /dev command that routes implementation requests through programmer and reviewer subagents.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

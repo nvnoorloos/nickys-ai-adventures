@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en" data-theme="fashion-noir"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v5.18.0"><title>Nicky&#39;s AI Adventures</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/nickys-ai-adventures/_astro/2026-03-03-openclaw-dev-command.CILKsHaR.css"></head> <body> <main>  <section class="blog-hero"> <h1 class="site-title">Nicky's AI Adventures</h1> <p class="subtitle">AI Related stories, insights, and practical experiments!</p> </section> <section class="post-list"> <article class="post-card"> <p class="post-meta"> <time datetime="2026-03-03">March 3, 2026</time> <span>• 6 min read</span> </p> <h2><a href="/nickys-ai-adventures/posts/2026-03-03-openclaw-dev-command">Custom developer workflow in OpenClaw using extensions</a></h2> <p class="post-description">How I built a custom /dev Telegram command in OpenClaw: plugin registration, command flow, two-agent orchestration, and practical safety checks.</p> </article> </section>  <footer>Built with Astro • Fueled by AI, curiosity, and coffee.</footer> </main> <script>
+      function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        return copied;
+      }
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+
+        return fallbackCopy(text);
+      }
+
+      function setupCodeCopyButtons() {
+        const codeBlocks = document.querySelectorAll('.post-shell pre');
+
+        codeBlocks.forEach((pre) => {
+          if (pre.dataset.copyReady === 'true') {
+            return;
+          }
+
+          pre.dataset.copyReady = 'true';
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'copy-code-btn';
+          button.textContent = 'Copy';
+          button.setAttribute('aria-label', 'Copy code block');
+
+          button.addEventListener('click', async () => {
+            const code = pre.querySelector('code');
+            const textToCopy = (code ? code.textContent : pre.textContent) || '';
+
+            if (!textToCopy.trim()) {
+              return;
+            }
+
+            const defaultText = 'Copy';
+
+            try {
+              await copyText(textToCopy);
+              button.textContent = 'Copied';
+            } catch {
+              button.textContent = 'Ctrl+C';
+            }
+
+            window.setTimeout(() => {
+              button.textContent = defaultText;
+            }, 1200);
+          });
+
+          pre.appendChild(button);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupCodeCopyButtons, { once: true });
+      } else {
+        setupCodeCopyButtons();
+      }
+    </script> </body> </html>

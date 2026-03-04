@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Nicky's AI Adventures Cover</title>
+  <desc id="desc">An abstract orbital sunrise in warm mango tones.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8C0707"/>
+      <stop offset="45%" stop-color="#D92D07"/>
+      <stop offset="100%" stop-color="#F2780C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#D9C5A0" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#D9C5A0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <ellipse cx="600" cy="290" rx="430" ry="220" fill="url(#glow)"/>
+  <circle cx="600" cy="315" r="125" fill="#8C7C2B" opacity="0.9"/>
+  <g fill="none" stroke="#D9C5A0" stroke-width="5" opacity="0.65">
+    <ellipse cx="600" cy="315" rx="320" ry="150"/>
+    <ellipse cx="600" cy="315" rx="250" ry="110"/>
+    <ellipse cx="600" cy="315" rx="390" ry="190"/>
+  </g>
+  <text x="600" y="560" text-anchor="middle" fill="#FDF6E8" font-size="56" font-family="Georgia, serif">Nicky's AI Adventures</text>
+</svg>

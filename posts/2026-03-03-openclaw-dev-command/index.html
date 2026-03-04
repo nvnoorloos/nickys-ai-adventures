@@ -1,0 +1,164 @@
+<!DOCTYPE html><html lang="en" data-theme="fashion-noir"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v5.18.0"><title>Custom developer workflow in OpenClaw using extensions | Nicky&#39;s AI Adventures</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/nickys-ai-adventures/_astro/2026-03-03-openclaw-dev-command.CILKsHaR.css"></head> <body> <main>  <article class="post-shell"> <a class="back-home" href="/nickys-ai-adventures" aria-label="Back to Nicky's AI Adventures homepage">
+← Back to Nicky’s AI Adventures
+</a> <h1>Custom developer workflow in OpenClaw using extensions</h1> <p class="meta">Published on 2026-03-03</p> <p>I wanted one command that feels like a tiny dev team in my pocket.</p>
+<p>So I built a custom OpenClaw extension that adds <code>/dev</code> in Telegram. You give it a project + task, it lets <strong>code-bot</strong> implement, then <strong>review-bot</strong> sanity-check, and finally returns one clean result.</p>
+<p>Short version: less context-switching, fewer half-finished ideas, and way less “wait, what changed?”.</p>
+<h2 id="what-the-workflow-does">What the workflow does</h2>
+<p>From Telegram:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">/dev</span><span style="color:#9ECBFF"> my-project</span><span style="color:#9ECBFF"> -</span><span style="color:#9ECBFF"> add</span><span style="color:#9ECBFF"> health</span><span style="color:#9ECBFF"> endpoint</span><span style="color:#9ECBFF"> and</span><span style="color:#9ECBFF"> tests</span></span></code></pre>
+<p>The extension runs this flow:</p>
+<ol>
+<li>Parse args (<code>project - task</code>)</li>
+<li>Validate project scope</li>
+<li>Ask <code>code-bot</code> to implement</li>
+<li>Ask <code>review-bot</code> to review code-bot output</li>
+<li>Return combined output</li>
+<li>Send progress updates while running</li>
+</ol>
+<p>That’s the whole game: <strong>one command, two agents, one report</strong>.</p>
+<h2 id="telegram-command-registration-actual-behavior">Telegram command registration (actual behavior)</h2>
+<p>In the extension code, the command is registered twice:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="ts"><code><span class="line"><span style="color:#B392F0">registerDevCommand</span><span style="color:#E1E4E8">(api, </span><span style="color:#9ECBFF">"dev"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">registerDevCommand</span><span style="color:#E1E4E8">(api, </span><span style="color:#9ECBFF">"dev@your_bot_username"</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<p>Why both? In Telegram groups, commands are often sent as <code>/dev@botname</code>. Registering both avoids “command not found” drama.</p>
+<h2 id="plugin-registration-in-openclaw-config">Plugin registration in OpenClaw config</h2>
+<p>I checked the OpenClaw config registration too. The important part is that the plugin is both allowed and enabled.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="json"><code><span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#79B8FF">  "plugins"</span><span style="color:#E1E4E8">: {</span></span>
+<span class="line"><span style="color:#79B8FF">    "allow"</span><span style="color:#E1E4E8">: [</span><span style="color:#9ECBFF">"dev-command"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"telegram"</span><span style="color:#E1E4E8">],</span></span>
+<span class="line"><span style="color:#79B8FF">    "entries"</span><span style="color:#E1E4E8">: {</span></span>
+<span class="line"><span style="color:#79B8FF">      "dev-command"</span><span style="color:#E1E4E8">: { </span><span style="color:#79B8FF">"enabled"</span><span style="color:#E1E4E8">: </span><span style="color:#79B8FF">true</span><span style="color:#E1E4E8"> }</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>If this is missing, your command won’t fire, no matter how pretty your TypeScript is.</p>
+<h2 id="input-contract-keep-it-strict">Input contract: keep it strict</h2>
+<p>The parser expects exactly this format:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>&#x3C;project-folder> - &#x3C;task prompt></span></span></code></pre>
+<p>Minimal parser shape:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="ts"><code><span class="line"><span style="color:#F97583">function</span><span style="color:#B392F0"> parseDevArgs</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">rawArgs</span><span style="color:#F97583">:</span><span style="color:#79B8FF"> string</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> i</span><span style="color:#F97583"> =</span><span style="color:#E1E4E8"> rawArgs.</span><span style="color:#B392F0">trim</span><span style="color:#E1E4E8">().</span><span style="color:#B392F0">indexOf</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">" - "</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> (i </span><span style="color:#F97583">===</span><span style="color:#F97583"> -</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">) </span><span style="color:#F97583">throw</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Error</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Usage: /dev &#x3C;project> - &#x3C;task>"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> projectFolder</span><span style="color:#F97583"> =</span><span style="color:#E1E4E8"> rawArgs.</span><span style="color:#B392F0">slice</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">, i).</span><span style="color:#B392F0">trim</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">  const</span><span style="color:#79B8FF"> task</span><span style="color:#F97583"> =</span><span style="color:#E1E4E8"> rawArgs.</span><span style="color:#B392F0">slice</span><span style="color:#E1E4E8">(i </span><span style="color:#F97583">+</span><span style="color:#79B8FF"> 3</span><span style="color:#E1E4E8">).</span><span style="color:#B392F0">trim</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">  return</span><span style="color:#E1E4E8"> { projectFolder, task };</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>This keeps command usage predictable and error messages clear.</p>
+<h2 id="scope-safety-project-folder-guardrails">Scope safety: project folder guardrails</h2>
+<p>The extension only allows direct child folders under a fixed projects root.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="ts"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> PROJECTS_ROOT</span><span style="color:#F97583"> =</span><span style="color:#9ECBFF"> "/workspace/projects"</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> (projectFolder.</span><span style="color:#B392F0">includes</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8">) </span><span style="color:#F97583">||</span><span style="color:#E1E4E8"> projectFolder.</span><span style="color:#B392F0">includes</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">)) {</span></span>
+<span class="line"><span style="color:#F97583">  throw</span><span style="color:#F97583"> new</span><span style="color:#B392F0"> Error</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Project folder must be a direct child folder."</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Then it resolves and confirms the path stays inside the allowed root. This blocks path traversal tricks before they become your next debugging hobby.</p>
+<h2 id="agent-orchestration-implementation-first-review-second">Agent orchestration: implementation first, review second</h2>
+<p>The extension runs both agents with separate session keys:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="ts"><code><span class="line"><span style="color:#B392F0">agent</span><span style="color:#E1E4E8">:code</span><span style="color:#F97583">-</span><span style="color:#B392F0">bot</span><span style="color:#E1E4E8">:</span><span style="color:#B392F0">dev</span><span style="color:#E1E4E8">:&#x3C;</span><span style="color:#B392F0">projectKey</span><span style="color:#E1E4E8">></span></span>
+<span class="line"><span style="color:#B392F0">agent</span><span style="color:#E1E4E8">:review</span><span style="color:#F97583">-</span><span style="color:#B392F0">bot</span><span style="color:#E1E4E8">:</span><span style="color:#B392F0">dev</span><span style="color:#E1E4E8">:&#x3C;</span><span style="color:#B392F0">projectKey</span><span style="color:#E1E4E8">></span></span></code></pre>
+<p>And it uses a deliberate handoff:</p>
+<ul>
+<li><code>code-bot</code> gets the original task and must return structured sections</li>
+<li><code>review-bot</code> receives both the original task and code-bot output</li>
+</ul>
+<p>This gives a lightweight PR-like loop without opening a PR.</p>
+<h2 id="progress-messages-small-detail-big-ux">Progress messages (small detail, big UX)</h2>
+<p>Long-running commands feel broken if they stay silent. So the extension posts progress messages like:</p>
+<ul>
+<li>Step 1/2: code-bot is working</li>
+<li>Step 2/2: review-bot is reviewing</li>
+<li>Final result is being assembled</li>
+</ul>
+<p>It keeps the Telegram thread alive and lowers “is it stuck?” anxiety.</p>
+<h2 id="final-response-format">Final response format</h2>
+<p>The final message is assembled into two clear blocks:</p>
+<ul>
+<li><strong>Code Bot</strong> output</li>
+<li><strong>Review Bot</strong> output</li>
+</ul>
+<p>That makes it easy to read in chat and easy to copy into issues/commits.</p>
+<h2 id="why-this-setup-works-well">Why this setup works well</h2>
+<p>For me, this pattern hits the sweet spot:</p>
+<ul>
+<li><strong>Fast:</strong> one Telegram command triggers a full workflow</li>
+<li><strong>Structured:</strong> consistent output every run</li>
+<li><strong>Safer:</strong> scoped project selection + strict parsing</li>
+<li><strong>Practical:</strong> built-in review pass catches obvious misses</li>
+</ul>
+<p>Could this get fancier? Sure. But this version already saves time every day, and that’s the metric that matters.</p>
+<h2 id="full-implementation-files">Full implementation files</h2>
+<ul>
+<li><a href="https://github.com/nvnoorloos/nickys-ai-adventures/blob/gh-pages/posts/2026-03-03-openclaw-dev-command/code/index.ts" target="_blank" rel="noopener noreferrer">Annotated extension source (<code>index.ts</code>)</a></li>
+<li><a href="https://github.com/nvnoorloos/nickys-ai-adventures/blob/gh-pages/posts/2026-03-03-openclaw-dev-command/code/openclaw.plugin.json" target="_blank" rel="noopener noreferrer">Plugin manifest (<code>openclaw.plugin.json</code>)</a></li>
+</ul> </article>  <footer>Built with Astro • Fueled by AI, curiosity, and coffee.</footer> </main> <script>
+      function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        return copied;
+      }
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+
+        return fallbackCopy(text);
+      }
+
+      function setupCodeCopyButtons() {
+        const codeBlocks = document.querySelectorAll('.post-shell pre');
+
+        codeBlocks.forEach((pre) => {
+          if (pre.dataset.copyReady === 'true') {
+            return;
+          }
+
+          pre.dataset.copyReady = 'true';
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'copy-code-btn';
+          button.textContent = 'Copy';
+          button.setAttribute('aria-label', 'Copy code block');
+
+          button.addEventListener('click', async () => {
+            const code = pre.querySelector('code');
+            const textToCopy = (code ? code.textContent : pre.textContent) || '';
+
+            if (!textToCopy.trim()) {
+              return;
+            }
+
+            const defaultText = 'Copy';
+
+            try {
+              await copyText(textToCopy);
+              button.textContent = 'Copied';
+            } catch {
+              button.textContent = 'Ctrl+C';
+            }
+
+            window.setTimeout(() => {
+              button.textContent = defaultText;
+            }, 1200);
+          });
+
+          pre.appendChild(button);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupCodeCopyButtons, { once: true });
+      } else {
+        setupCodeCopyButtons();
+      }
+    </script> </body> </html>
