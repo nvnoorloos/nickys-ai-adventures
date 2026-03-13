@@ -1,0 +1,171 @@
+<!DOCTYPE html><html lang="en" data-theme="fashion-noir"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v5.18.0"><title>Building an MCP Server &amp; MCP App for Kubernetes @ Dutch AI Con | Nicky&#39;s AI Adventures</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/nickys-ai-adventures/_astro/2026-03-03-openclaw-dev-command.cLnCR87J.css"></head> <body> <main>  <article class="post-shell"> <a class="back-home" href="/nickys-ai-adventures" aria-label="Back to Nicky's AI Adventures homepage">
+← Back to Nicky’s AI Adventures
+</a> <h1>Building an MCP Server &amp; MCP App for Kubernetes @ Dutch AI Con</h1> <p class="meta">Published on 2026-03-13</p> <p>Last week I was attending Dutch AI Con, and the workshops on building an MCP server and exploring the new MCP Apps extension made one thing very clear: this is no longer just “future cool” tech; it is something you can actually use right now.</p>
+<p>So I built a small MCP server and MCP App showcase for Kubernetes that opens live pod CPU and memory usage in chat and then gives optimization guidance based on real metrics.</p>
+<p>That is the whole game: not just talk about infra, but actually look at it!</p>
+<img class="hero-gif" src="https://raw.githubusercontent.com/nvnoorloos/k8s-cluster-mcp-showcase/main/showcase-k8s-cluster-mcp.gif" alt="k8s-cluster-mcp showcase in action">
+<h2 id="what-i-built">What I built</h2>
+<p>The project is called <strong>k8s-cluster-mcp-showcase</strong>.</p>
+<p>It combines three pieces:</p>
+<ul>
+<li>a FastMCP server in Python</li>
+<li>an MCP App UI embedded inside the client</li>
+<li>Kubernetes integration using pods and <code>metrics-server</code></li>
+</ul>
+<p>So when I ask the assistant about pod resources, it can open an interactive dashboard, show live CPU and memory usage, and give optimization suggestions for a selected pod.</p>
+<p>That is where this starts to get interesting. The assistant is not just describing a system. It is looking at something real.</p>
+<h2 id="why-i-wanted-to-build-this">Why I wanted to build this</h2>
+<p>A lot of AI demos stop at “look, the tool was called.”</p>
+<p>That is fine for a proof of concept, but it is not the part that gets me excited.</p>
+<p>What I wanted was something that feels closer to an actual operator workflow. Open the UI inside the client. Pull live data from the cluster. Then let the model reason on top of that.</p>
+<p>That changes the feel of it completely.</p>
+<p>It stops being a chat that talks about infrastructure and starts feeling more like a chat that can inspect infrastructure with you.</p>
+<h2 id="what-the-flow-looks-like">What the flow looks like</h2>
+<p>The flow is pretty simple.</p>
+<p>You ask for pod resource usage.</p>
+<p>The MCP server opens the dashboard inside the client.</p>
+<p>The dashboard polls metrics every second.</p>
+<p>You select a pod, or preselect one through the prompt.</p>
+<p>Then you trigger optimization guidance and get back a structured response with a summary, findings, confidence, and caution.</p>
+<p>That loop feels surprisingly good. Very close to having a tiny SRE sidekick sitting in the chat with you.</p>
+<h2 id="mcp-app-registration">MCP App registration</h2>
+<p>The important bit is that the dashboard is exposed as a resource, then opened through a tool.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#B392F0">@mcp.resource</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"ui://k8s-cluster/pod-monitor.html"</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">mime_type</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">"text/html"</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> pod_monitor_html</span><span style="color:#E1E4E8">() -> </span><span style="color:#79B8FF">str</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#79B8FF"> UI_HTML_PATH</span><span style="color:#E1E4E8">.read_text()</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">@mcp.tool</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">app</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">AppConfig(</span><span style="color:#FFAB70">resource_uri</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">"ui://k8s-cluster/pod-monitor.html"</span><span style="color:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> pod_resource_monitor</span><span style="color:#E1E4E8">(pod_name: </span><span style="color:#79B8FF">str</span><span style="color:#F97583"> |</span><span style="color:#79B8FF"> None</span><span style="color:#F97583"> =</span><span style="color:#79B8FF"> None</span><span style="color:#E1E4E8">, namespace: </span><span style="color:#79B8FF">str</span><span style="color:#F97583"> |</span><span style="color:#79B8FF"> None</span><span style="color:#F97583"> =</span><span style="color:#79B8FF"> None</span><span style="color:#E1E4E8">) -> </span><span style="color:#79B8FF">str</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> _pod_resource_monitor(pod_name, namespace)</span></span></code></pre>
+<p>That is what makes the assistant open a real in-client dashboard instead of replying with plain text.</p>
+<h2 id="live-metrics-use-actual-cluster-data">Live metrics: use actual cluster data</h2>
+<p>The dashboard is not rendering mock data. It reads from <code>metrics-server</code> and pulls the current CPU and memory usage for the selected pod.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#E1E4E8">metrics </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> custom_api.get_namespaced_custom_object(</span></span>
+<span class="line"><span style="color:#FFAB70">    group</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">"metrics.k8s.io"</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#FFAB70">    version</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">"v1beta1"</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#FFAB70">    namespace</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">namespace,</span></span>
+<span class="line"><span style="color:#FFAB70">    plural</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">"pods"</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#FFAB70">    name</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">pod_name,</span></span>
+<span class="line"><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">container_metrics </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> [</span></span>
+<span class="line"><span style="color:#E1E4E8">    {</span></span>
+<span class="line"><span style="color:#9ECBFF">        "name"</span><span style="color:#E1E4E8">: c[</span><span style="color:#9ECBFF">"name"</span><span style="color:#E1E4E8">],</span></span>
+<span class="line"><span style="color:#9ECBFF">        "current_cpu"</span><span style="color:#E1E4E8">: c.get(</span><span style="color:#9ECBFF">"usage"</span><span style="color:#E1E4E8">, {}).get(</span><span style="color:#9ECBFF">"cpu"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"unknown"</span><span style="color:#E1E4E8">),</span></span>
+<span class="line"><span style="color:#9ECBFF">        "current_memory"</span><span style="color:#E1E4E8">: c.get(</span><span style="color:#9ECBFF">"usage"</span><span style="color:#E1E4E8">, {}).get(</span><span style="color:#9ECBFF">"memory"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"unknown"</span><span style="color:#E1E4E8">),</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#F97583">    for</span><span style="color:#E1E4E8"> c </span><span style="color:#F97583">in</span><span style="color:#E1E4E8"> metrics.get(</span><span style="color:#9ECBFF">"containers"</span><span style="color:#E1E4E8">, [])</span></span>
+<span class="line"><span style="color:#E1E4E8">]</span></span></code></pre>
+<p>That matters because the optimization step is based on a real snapshot, not a fabricated example.</p>
+<h2 id="optimization-contract-keep-it-structured">Optimization contract: keep it structured</h2>
+<p>Once the pod spec and current metrics are collected, the server uses MCP Sampling to ask the connected model for a strict JSON response.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#E1E4E8">result </span><span style="color:#F97583">=</span><span style="color:#F97583"> await</span><span style="color:#E1E4E8"> ctx.sample(</span></span>
+<span class="line"><span style="color:#FFAB70">    messages</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#F97583">        f</span><span style="color:#9ECBFF">"Optimize Kubernetes pod resources for </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">namespace</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">/</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">pod_name</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">.</span><span style="color:#79B8FF">\n\n</span><span style="color:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#F97583">        f</span><span style="color:#9ECBFF">"Pod resource data:</span><span style="color:#79B8FF">\n{</span><span style="color:#E1E4E8">json.dumps(pod_data, </span><span style="color:#FFAB70">indent</span><span style="color:#F97583">=</span><span style="color:#79B8FF">2</span><span style="color:#E1E4E8">)</span><span style="color:#79B8FF">}\n\n</span><span style="color:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#9ECBFF">        "Return exactly one JSON object with summary, findings, "</span></span>
+<span class="line"><span style="color:#9ECBFF">        "recommendations, confidence, and caution."</span></span>
+<span class="line"><span style="color:#E1E4E8">    ),</span></span>
+<span class="line"><span style="color:#FFAB70">    system_prompt</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#9ECBFF">        "You are a senior Kubernetes platform engineer. "</span></span>
+<span class="line"><span style="color:#9ECBFF">        "Provide conservative, actionable resource optimization guidance."</span></span>
+<span class="line"><span style="color:#E1E4E8">    ),</span></span>
+<span class="line"><span style="color:#FFAB70">    max_tokens</span><span style="color:#F97583">=</span><span style="color:#79B8FF">700</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">)</span></span></code></pre>
+<h2 id="why-this-works-well">Why this works well</h2>
+<p>For me, this setup hits a really nice balance.</p>
+<p>It is grounded because the recommendations start from live metrics and actual pod configuration.</p>
+<p>It is interactive because the inspection stays inside the client instead of bouncing you out to another dashboard.</p>
+<p>It is structured because the optimization response comes back in a predictable format.</p>
+<p>And it is practical because the whole thing is simple enough to run locally with kind and <code>metrics-server</code>.</p>
+<p>That last part matters too. I like demos that are easy to understand, but I like them even more when they are easy to run.</p>
+<h2 id="if-you-want-to-try-it">If you want to try it</h2>
+<p>The repo includes a one-command showcase script that creates or reuses a kind cluster, installs <code>metrics-server</code>, deploys a demo pod, deploys the MCP server, and exposes it over HTTP.</p>
+<p>Minimal client config looks like this:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="json"><code><span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#79B8FF">  "mcp"</span><span style="color:#E1E4E8">: {</span></span>
+<span class="line"><span style="color:#79B8FF">    "servers"</span><span style="color:#E1E4E8">: {</span></span>
+<span class="line"><span style="color:#79B8FF">      "k8s-cluster-mcp"</span><span style="color:#E1E4E8">: {</span></span>
+<span class="line"><span style="color:#79B8FF">        "type"</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">"http"</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#79B8FF">        "url"</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">"http://localhost:8000/mcp"</span></span>
+<span class="line"><span style="color:#E1E4E8">      }</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>From there, you can connect with an MCP-capable client and start asking about pod resource usage.</p>
+<h2 id="public-repo">Public repo</h2>
+<p>The full project is public on GitHub, including the MCP server, the optimization logic, the UI app, and the showcase script.</p>
+<ul>
+<li><a href="https://github.com/nvnoorloos/k8s-cluster-mcp-showcase" target="_blank" rel="noopener noreferrer">k8s-cluster-mcp-showcase on GitHub</a></li>
+</ul> </article>  <footer>Built with Astro • Fueled by AI, curiosity, and coffee.</footer> </main> <script>
+      function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        return copied;
+      }
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+
+        return fallbackCopy(text);
+      }
+
+      function setupCodeCopyButtons() {
+        const codeBlocks = document.querySelectorAll('.post-shell pre');
+
+        codeBlocks.forEach((pre) => {
+          if (pre.dataset.copyReady === 'true') {
+            return;
+          }
+
+          pre.dataset.copyReady = 'true';
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'copy-code-btn';
+          button.textContent = 'Copy';
+          button.setAttribute('aria-label', 'Copy code block');
+
+          button.addEventListener('click', async () => {
+            const code = pre.querySelector('code');
+            const textToCopy = (code ? code.textContent : pre.textContent) || '';
+
+            if (!textToCopy.trim()) {
+              return;
+            }
+
+            const defaultText = 'Copy';
+
+            try {
+              await copyText(textToCopy);
+              button.textContent = 'Copied';
+            } catch {
+              button.textContent = 'Ctrl+C';
+            }
+
+            window.setTimeout(() => {
+              button.textContent = defaultText;
+            }, 1200);
+          });
+
+          pre.appendChild(button);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupCodeCopyButtons, { once: true });
+      } else {
+        setupCodeCopyButtons();
+      }
+    </script> </body> </html>
