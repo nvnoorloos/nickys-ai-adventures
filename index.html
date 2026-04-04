@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en" data-theme="fashion-noir"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v5.18.0"><title>Nicky&#39;s AI Adventures</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/nickys-ai-adventures/_astro/2026-03-03-openclaw-dev-command.ByBRUnw4.css"></head> <body> <main>  <section class="blog-hero"> <h1 class="site-title">Nicky's AI Adventures</h1> <p class="subtitle">AI Related stories, insights, and practical experiments!</p> </section> <aside class="author-strip" aria-label="About the author"> <img class="author-avatar" src="/nickys-ai-adventures/nvnoorloos-avatar.jpeg" alt="Nicky van Noorloos" width="52" height="52" loading="eager" decoding="async"> <div class="author-body"> <div class="author-head"> <span class="author-role">About the Author</span> <span class="author-sep" aria-hidden="true">/</span> <span class="author-name">Nicky van Noorloos</span> </div> <p class="author-bio">With AI as my daily co-pilot, I actively promote practical, AI-driven approaches to accelerate development workflows and boost developer productivity.</p> </div> <a class="author-linkedin" href="https://www.linkedin.com/in/nvnoorloos/" target="_blank" rel="noreferrer">LinkedIn ↗</a> </aside> <section class="post-list"> <article class="post-card"> <p class="post-meta"> <time datetime="2026-04-02">April 2, 2026</time> <span>• 10 min read</span> </p> <h2><a href="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team">Squad: An AI Dev Team That Actually Ships Code</a></h2> <p class="post-description">I gave a 5-agent Squad team a GitHub issue and watched them triage, implement, review, and merge a feature. All without touching the keyboard!</p> </article><article class="post-card"> <p class="post-meta"> <time datetime="2026-03-13">March 13, 2026</time> <span>• 8 min read</span> </p> <h2><a href="/nickys-ai-adventures/posts/2026-03-13-k8s-cluster-mcp-showcase">Building an MCP Server &amp; MCP App for Kubernetes @ Dutch AI Con</a></h2> <p class="post-description">How I built a Kubernetes MCP server + MCP App that opens a live pod resource dashboard and returns optimization guidance from real metrics.</p> </article><article class="post-card"> <p class="post-meta"> <time datetime="2026-03-03">March 3, 2026</time> <span>• 6 min read</span> </p> <h2><a href="/nickys-ai-adventures/posts/2026-03-03-openclaw-dev-command">Custom developer workflow in OpenClaw using extensions</a></h2> <p class="post-description">How I built a custom /dev Telegram command in OpenClaw: plugin registration, command flow, two-agent orchestration, and practical safety checks.</p> </article> </section>  <footer>Built with Astro • Fueled by AI, curiosity, and coffee.</footer> </main> <script>
+      function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        return copied;
+      }
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+
+        return fallbackCopy(text);
+      }
+
+      function setupCodeCopyButtons() {
+        const codeBlocks = document.querySelectorAll('.post-shell pre');
+
+        codeBlocks.forEach((pre) => {
+          if (pre.dataset.copyReady === 'true') {
+            return;
+          }
+
+          pre.dataset.copyReady = 'true';
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'copy-code-btn';
+          button.textContent = 'Copy';
+          button.setAttribute('aria-label', 'Copy code block');
+
+          button.addEventListener('click', async () => {
+            const code = pre.querySelector('code');
+            const textToCopy = (code ? code.textContent : pre.textContent) || '';
+
+            if (!textToCopy.trim()) {
+              return;
+            }
+
+            const defaultText = 'Copy';
+
+            try {
+              await copyText(textToCopy);
+              button.textContent = 'Copied';
+            } catch {
+              button.textContent = 'Ctrl+C';
+            }
+
+            window.setTimeout(() => {
+              button.textContent = defaultText;
+            }, 1200);
+          });
+
+          pre.appendChild(button);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupCodeCopyButtons, { once: true });
+      } else {
+        setupCodeCopyButtons();
+      }
+    </script> </body> </html>

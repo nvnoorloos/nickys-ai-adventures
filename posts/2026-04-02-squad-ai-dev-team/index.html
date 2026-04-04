@@ -1,0 +1,273 @@
+<!DOCTYPE html><html lang="en" data-theme="fashion-noir"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v5.18.0"><title>Squad: An AI Dev Team That Actually Ships Code | Nicky&#39;s AI Adventures</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/nickys-ai-adventures/_astro/2026-03-03-openclaw-dev-command.ByBRUnw4.css"></head> <body> <main>  <article class="post-shell"> <a class="back-home" href="/nickys-ai-adventures" aria-label="Back to Nicky's AI Adventures homepage">
+← Back to Nicky’s AI Adventures
+</a> <h1>Squad: An AI Dev Team That Actually Ships Code</h1> <p class="meta">Published on 2026-04-02</p> <p>I created <a href="https://github.com/nvnoorloos/squad-demo/issues/2" target="_blank" rel="noopener noreferrer">a GitHub issue</a>. Five minutes later, a feature branch existed, tests were passing, a code review was posted, and <a href="https://github.com/nvnoorloos/squad-demo/pull/3" target="_blank" rel="noopener noreferrer">the PR</a> was merged into <code>main</code>.</p>
+<p>I did not write a single line of code.</p>
+<p>That is <a href="https://github.com/bradygaster/squad" target="_blank" rel="noopener noreferrer">Squad</a>.</p>
+<h2 id="what-is-squad">What is Squad?</h2>
+<p>Squad is a multi-agent framework by <a href="https://github.com/bradygaster" target="_blank" rel="noopener noreferrer">Brady Gaster</a> that turns a <code>.squad/</code> folder in your repo into an AI development team. Each agent has a name, a charter (what they know, what they own), and a history of past work. A coordinator called <strong>Ralph</strong> watches the GitHub issue board, routes work to the right agent, and keeps the loop moving until the board is clear.</p>
+<p>That is the whole game: <strong>issue in, merged PR out</strong>.</p>
+<h2 id="the-team-i-built">The team I built</h2>
+<p>I set up <a href="https://github.com/nvnoorloos/squad-demo" target="_blank" rel="noopener noreferrer">a small full-stack demo app</a> — an Astro frontend with a FastAPI backend — and then initialized a squad for it.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">npm</span><span style="color:#9ECBFF"> install</span><span style="color:#79B8FF"> -g</span><span style="color:#9ECBFF"> @bradygaster/squad-cli</span></span>
+<span class="line"><span style="color:#B392F0">squad</span><span style="color:#9ECBFF"> init</span></span></code></pre>
+<p>That scaffolds a <code>.squad/</code> directory with team config, routing rules, agent charters, and templates. I customized the team to have five members:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Name</th><th>Role</th><th>What they own</th></tr></thead><tbody><tr><td><strong>Keaton</strong></td><td>Frontend Engineer</td><td>Astro pages, components, CSS, layouts</td></tr><tr><td><strong>McManus</strong></td><td>Backend Engineer</td><td>FastAPI endpoints, Pydantic models, data store</td></tr><tr><td><strong>Fenster</strong></td><td>QA &#x26; Test Engineer</td><td>Unit tests, integration tests, edge cases</td></tr><tr><td><strong>Hockney</strong></td><td>DevOps &#x26; Infra</td><td>Docker, CI/CD, GitHub Actions</td></tr><tr><td><strong>Verbal</strong></td><td>Tech Lead</td><td>Architecture, code review, decisions</td></tr></tbody></table>
+<p>Plus the built-in <strong>Ralph</strong> (coordinator) and <strong>Scribe</strong> (session logger).</p>
+<p>Each agent has a charter file at <code>.squad/agents/{name}/charter.md</code> that describes their identity, expertise, and working style. The routing table in <code>.squad/routing.md</code> maps work types to agents:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Work Type</th><th>Route To</th><th>Examples</th></tr></thead><tbody><tr><td>Frontend UI</td><td>Keaton</td><td>Astro pages, components, CSS</td></tr><tr><td>Backend API</td><td>McManus</td><td>FastAPI endpoints, Pydantic models</td></tr><tr><td>Testing</td><td>Fenster</td><td>Unit tests, integration tests</td></tr><tr><td>Infrastructure</td><td>Hockney</td><td>Docker, CI/CD, deployment</td></tr><tr><td>Architecture &#x26; Review</td><td>Verbal</td><td>Design decisions, code review</td></tr></tbody></table>
+<h2 id="the-ralph-loop">The Ralph Loop</h2>
+<p>Ralph is the engine that makes this work. Here is the flow:</p>
+<ol>
+<li>A GitHub issue gets the <code>squad</code> label</li>
+<li>Ralph scans the board, reads the issue</li>
+<li>The lead agent (<strong>Verbal</strong>) triages — analyzes the content, assigns a <code>squad:{member}</code> label</li>
+<li>The assigned agent picks up the issue on a feature branch</li>
+<li>They implement the work and create a PR</li>
+<li>The lead reviews the PR</li>
+<li>If approved, Ralph merges it and closes the issue</li>
+</ol>
+<p>You kick it off with one command:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">copilot</span><span style="color:#79B8FF"> --agent</span><span style="color:#9ECBFF"> squad</span><span style="color:#79B8FF"> --allow-all</span><span style="color:#79B8FF"> --no-ask-user</span><span style="color:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#79B8FF">  -p</span><span style="color:#9ECBFF"> "Ralph, go"</span></span></code></pre>
+<p>That is everything. Ralph takes it from there.</p>
+<h2 id="the-demo-adding-a-stats-endpoint">The demo: adding a stats endpoint</h2>
+<p>I created <a href="https://github.com/nvnoorloos/squad-demo/issues/2" target="_blank" rel="noopener noreferrer">a GitHub issue</a> asking for a <code>GET /api/tasks/stats</code> endpoint that returns aggregate statistics about the task board — total count, breakdown by status, breakdown by assignee.</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/01-issue-created.png" alt="GitHub issue created with squad label"></p>
+<p>The issue got the <code>squad</code> label, which puts it in the triage inbox.</p>
+<h3 id="step-1-ralph-finds-the-issue">Step 1: Ralph finds the issue</h3>
+<p>When I launched the Copilot CLI with the squad agent, Ralph loaded the team configuration, read routing rules, and scanned the GitHub board:</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/02-ralph-finds-issue.png" alt="Ralph finds untriaged issue #2"></p>
+<p>Ralph correctly identified this as backend work from the issue description mentioning <code>FastAPI</code>, <code>backend/app/main.py</code>, and <code>Pydantic models</code>.</p>
+<h3 id="step-2-verbal-triages">Step 2: Verbal triages</h3>
+<p>Verbal, the tech lead, read the issue details and applied the <code>squad:mcmanus</code> label. This is the signal that McManus owns this work.</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/03-issue-triaged.png" alt="Issue triaged with squad:mcmanus label"></p>
+<h3 id="step-3-mcmanus-implements">Step 3: McManus implements</h3>
+<p>McManus got dispatched as a sub-agent running on <code>claude-sonnet-4.5</code>.</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/04-mcmanus-implements.png" alt="McManus implementing on a feature branch"></p>
+<p>He:</p>
+<ul>
+<li>Created a <code>squad/2-add-task-stats-endpoint</code> feature branch</li>
+<li>Implemented the requested feature + tests</li>
+<li>Opened <a href="https://github.com/nvnoorloos/squad-demo/pull/3" target="_blank" rel="noopener noreferrer">PR #3</a> back to <code>main</code></li>
+</ul>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/05-pr-opened.png" alt="McManus shipped PR #3"></p>
+<p>Five files changed, +141 lines, -2 lines. The PR description was clean:</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/06-pr-created.png" alt="PR created and merged"></p>
+<h3 id="step-4-verbal-reviews">Step 4: Verbal reviews</h3>
+<p>This is where it gets interesting. Verbal got bumped to <code>claude-opus-4.6</code> for the review (the coordinator automatically picks a larger model for reviewer gates).</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/07-verbal-reviews.png" alt="Verbal reviewing PR #3 on opus"></p>
+<p>He checked out the branch, read the diff, and posted a detailed review:</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/08-review-details.png" alt="Verbal&#x27;s code review"></p>
+<p><strong>Verdict: Ship it. Ralph, proceed to merge!</strong></p>
+<h3 id="step-5-ralph-merges">Step 5: Ralph merges</h3>
+<p>With the approval in, Ralph squash-merged <a href="https://github.com/nvnoorloos/squad-demo/pull/3" target="_blank" rel="noopener noreferrer">the PR</a>, deleted the feature branch, and closed <a href="https://github.com/nvnoorloos/squad-demo/issues/2" target="_blank" rel="noopener noreferrer">issue #2</a>.</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/09-ralph-merges.png" alt="Ralph merging after Verbal&#x27;s approval"></p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/10-pr-merged.png" alt="Files changed in PR"></p>
+<p>The board was clear. Scribe logged the full session back into Squad’s state files:</p>
+<p><img src="/nickys-ai-adventures/posts/2026-04-02-squad-ai-dev-team/images/11-board-clear.png" alt="Session complete — board is clear"></p>
+<h2 id="what-actually-happened-under-the-hood">What actually happened under the hood</h2>
+<p>The whole flow took about five minutes from issue creation to merged PR. Here is what the Copilot CLI output looked like during the run:</p>
+<ol>
+<li><strong>Ralph</strong> loaded <code>team.md</code>, <code>routing.md</code>, all agent charters</li>
+<li><strong>Ralph</strong> scanned GitHub issues and PRs via <code>gh</code> CLI</li>
+<li><strong>Verbal</strong> (claude-haiku-4.5, fast) triaged issue #2 → applied <code>squad:mcmanus</code> label</li>
+<li><strong>McManus</strong> (claude-sonnet-4.5) implemented the feature on a branch, ran tests, opened PR</li>
+<li><strong>Verbal</strong> (claude-opus-4.6, bumped for review) reviewed the PR → approved</li>
+<li><strong>Ralph</strong> merged PR #3, closed issue #2</li>
+<li><strong>Scribe</strong> (claude-haiku-4.5, background) logged the session to Squad’s state files</li>
+</ol>
+<p>Notice how different agents run on different models. The coordinator picks the right model for the job — fast models for triage and logging, the main model for implementation, and a larger model for reviews that need careful reasoning.</p>
+<h2 id="the-code-mcmanus-wrote">The code McManus wrote</h2>
+<p>Here is the actual stats endpoint that got merged:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#B392F0">@app.get</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"/api/tasks/stats"</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">response_model</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">TaskStats)</span></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> get_task_stats</span><span style="color:#E1E4E8">():</span></span>
+<span class="line"><span style="color:#9ECBFF">    """Return aggregate task board statistics."""</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> store.get_stats()</span></span></code></pre>
+<p>And the model:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#F97583">class</span><span style="color:#B392F0"> TaskStats</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">BaseModel</span><span style="color:#E1E4E8">):</span></span>
+<span class="line"><span style="color:#E1E4E8">    total: </span><span style="color:#79B8FF">int</span></span>
+<span class="line"><span style="color:#E1E4E8">    by_status: dict[</span><span style="color:#79B8FF">str</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">int</span><span style="color:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#E1E4E8">    by_assignee: dict[</span><span style="color:#79B8FF">str</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">int</span><span style="color:#E1E4E8">]</span></span></code></pre>
+<p>Clean, typed, exactly what the issue asked for.</p>
+<h2 id="why-this-is-different-from-just-using-copilot">Why this is different from just using Copilot</h2>
+<p>You could ask Copilot to “add a stats endpoint.” It would write the code. But that is a single-shot interaction.</p>
+<p>Squad gives you:</p>
+<ul>
+<li><strong>Triage</strong> — a lead analyzes the issue and routes it to the right person</li>
+<li><strong>Specialization</strong> — each agent knows their domain and sticks to it</li>
+<li><strong>Review gates</strong> — code does not merge without a lead reviewing it</li>
+<li><strong>Session history</strong> — agents remember what they have done before (!)</li>
+<li><strong>Branching discipline</strong> — feature branches, clean PRs, squash merges</li>
+<li><strong>Automatic logging</strong> — Scribe records every session in the Squad state files</li>
+</ul>
+<p>That is not just code generation. That is a workflow.</p>
+<h2 id="setup-in-your-own-repo">Setup in your own repo</h2>
+<p>If you want to try this:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># Install the CLI</span></span>
+<span class="line"><span style="color:#B392F0">npm</span><span style="color:#9ECBFF"> install</span><span style="color:#79B8FF"> -g</span><span style="color:#9ECBFF"> @bradygaster/squad-cli</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Initialize in your repo</span></span>
+<span class="line"><span style="color:#79B8FF">cd</span><span style="color:#9ECBFF"> your-project</span></span>
+<span class="line"><span style="color:#B392F0">squad</span><span style="color:#9ECBFF"> init</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># Check the team</span></span>
+<span class="line"><span style="color:#B392F0">squad</span><span style="color:#9ECBFF"> doctor</span></span></code></pre>
+<p>Then create your Team:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">copilot</span><span style="color:#79B8FF"> --agent</span><span style="color:#9ECBFF"> squad</span><span style="color:#79B8FF"> --allow-all</span><span style="color:#79B8FF"> --no-ask-user</span><span style="color:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#79B8FF">  -p</span><span style="color:#9ECBFF"> "I'm starting a new project. Set up the team."</span></span></code></pre>
+<p>Create a GitHub issue, slap the <code>squad</code> label on it, and run:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">copilot</span><span style="color:#79B8FF"> --agent</span><span style="color:#9ECBFF"> squad</span><span style="color:#79B8FF"> --allow-all</span><span style="color:#79B8FF"> --no-ask-user</span><span style="color:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#79B8FF">  -p</span><span style="color:#9ECBFF"> "Ralph, go"</span></span></code></pre>
+<p>Watch what happens.</p>
+<h2 id="my-thoughts">My Thoughts?</h2>
+<p>Could you set this up manually with custom instructions and prompt chaining? Sure. But Squad gives you the structure for free: charters, routing, ceremonies, history. It is the difference between a script and a framework.</p>
+<p>I have already had genuinely impressive results using Squad, and based on that I will absolutely keep using it!</p>
+<p><em>Squad is still early (v0.9.1) and an Alpha status project, so use at your own risk ;)</em></p>
+<h2 id="links">Links</h2>
+<ul>
+<li><a href="https://github.com/nvnoorloos/squad-demo" target="_blank" rel="noopener noreferrer">squad-demo repo</a> (the full project)</li>
+<li><a href="https://github.com/nvnoorloos/squad-demo/issues/2" target="_blank" rel="noopener noreferrer">Issue #2</a> (the original issue)</li>
+<li><a href="https://github.com/nvnoorloos/squad-demo/pull/3" target="_blank" rel="noopener noreferrer">PR #3</a> (the merged pull request with Verbal’s review)</li>
+<li><a href="https://github.com/bradygaster/squad" target="_blank" rel="noopener noreferrer">Squad on GitHub</a></li>
+<li><a href="https://bradygaster.github.io/squad/" target="_blank" rel="noopener noreferrer">Squad docs</a></li>
+</ul> </article>  <footer>Built with Astro • Fueled by AI, curiosity, and coffee.</footer> </main> <script>
+      function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        return copied;
+      }
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+
+        return fallbackCopy(text);
+      }
+
+      function setupCodeCopyButtons() {
+        const codeBlocks = document.querySelectorAll('.post-shell pre');
+
+        codeBlocks.forEach((pre) => {
+          if (pre.dataset.copyReady === 'true') {
+            return;
+          }
+
+          pre.dataset.copyReady = 'true';
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'copy-code-btn';
+          button.textContent = 'Copy';
+          button.setAttribute('aria-label', 'Copy code block');
+
+          button.addEventListener('click', async () => {
+            const code = pre.querySelector('code');
+            const textToCopy = (code ? code.textContent : pre.textContent) || '';
+
+            if (!textToCopy.trim()) {
+              return;
+            }
+
+            const defaultText = 'Copy';
+
+            try {
+              await copyText(textToCopy);
+              button.textContent = 'Copied';
+            } catch {
+              button.textContent = 'Ctrl+C';
+            }
+
+            window.setTimeout(() => {
+              button.textContent = defaultText;
+            }, 1200);
+          });
+
+          pre.appendChild(button);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupCodeCopyButtons, { once: true });
+      } else {
+        setupCodeCopyButtons();
+      }
+    </script> </body> </html>
